@@ -18,10 +18,10 @@ class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
   @override
-  SignInScreenState createState() => SignInScreenState();
+  State<SignInScreen> createState() => _SignInScreenState();
 }
 
-class SignInScreenState extends State<SignInScreen> {
+class _SignInScreenState extends State<SignInScreen> {
   final supabase = Supabase.instance.client;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -32,9 +32,16 @@ class SignInScreenState extends State<SignInScreen> {
 
     final response = await supabase.auth
         .signInWithPassword(email: email, password: password);
-    final Session? session = response.session;
     final User? user = response.user;
-    print(response.user);
+
+    if (user != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      // handle error
+    }
 
     // handle error
   }
