@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ejad/gallery.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -73,23 +74,44 @@ class _HomeScreenState extends State<HomeScreen> {
     print('Picture taken: ${file.path}');
   }
 
+  Future<void> _goGallery() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => StoragePage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Camera App',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Camera Preview')),
-        body: _controller.value.isInitialized
-            ? CameraPreview(_controller)
-            : const Center(child: CircularProgressIndicator()),
-        floatingActionButton: FloatingActionButton(
-          onPressed:
-              _speechToText.isNotListening ? _startListening : _stopListening,
-          tooltip: 'Listen',
-          child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic),
-        ),
-      ),
-    );
+        title: 'Camera App',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        home: Scaffold(
+          appBar: AppBar(title: const Text('Camera Preview')),
+          body: _controller.value.isInitialized
+              ? CameraPreview(_controller)
+              : const Center(child: CircularProgressIndicator()),
+          floatingActionButton:
+              Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+            FloatingActionButton(
+              onPressed: _speechToText.isNotListening
+                  ? _startListening
+                  : _stopListening,
+              tooltip: 'Listen',
+              heroTag: null,
+              child: Icon(
+                  _speechToText.isNotListening ? Icons.mic_off : Icons.mic),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            FloatingActionButton(
+              onPressed: _goGallery,
+              tooltip: 'Go to gallery',
+              heroTag: null,
+              child: const Icon(Icons.collections),
+            )
+          ]),
+        ));
   }
 }
