@@ -1,7 +1,9 @@
 import 'dart:io';
 
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,18 +16,46 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late CameraController _controller;
   List<CameraDescription> cameras = [];
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _lastWords = '';
 
   @override
   void initState() {
     super.initState();
-    initializeCamera();
+    _initializeCamera();
+    _initSpeech();
   }
 
-  Future<void> initializeCamera() async {
+  Future<void> _initializeCamera() async {
     cameras = await availableCameras();
     _controller = CameraController(cameras[0], ResolutionPreset.medium);
     await _controller.initialize();
-    if (mounted) setState(() {});
+    setState(() {});
+  }
+
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _lastWords = result.recognizedWords;
+    });
+    if (_lastWords.toLowerCase().contains('cheese')) {
+      _takePicture();
+    }
   }
 
   @override
@@ -34,13 +64,12 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void takePicture() async {
+  Future<void> _takePicture() async {
     final XFile file = await _controller.takePicture();
     final supabase = Supabase.instance.client;
     final String path = await supabase.storage.from('images').upload(
-        '${supabase.auth.currentUser?.id}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+        '${supabase.auth.currentUser?.id}/${DateTime.now().millisecondsSinceEpoch}_${_lastWords.toLowerCase()}.jpg',
         File(file.path));
-
     print('Picture taken: ${file.path}');
   }
 
@@ -55,8 +84,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ? CameraPreview(_controller)
             : const Center(child: CircularProgressIndicator()),
         floatingActionButton: FloatingActionButton(
-          onPressed: takePicture,
-          child: const Icon(Icons.camera),
+          onPressed:
+              _speechToText.isNotListening ? _startListening : _stopListening,
+          tooltip: 'Listen',
+          child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic),
         ),
       ),
     );
