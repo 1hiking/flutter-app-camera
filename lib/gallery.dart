@@ -2,33 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StoragePage extends StatefulWidget {
+  const StoragePage({super.key});
+
   @override
-  _StoragePageState createState() => _StoragePageState();
+  State<StoragePage> createState() => _StoragePageState();
 }
 
 class _StoragePageState extends State<StoragePage> {
   final SupabaseClient _supabaseClient = Supabase.instance.client;
-  List<String> _files = [];
+  List<String> _imageUrls = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadFiles();
+    _loadImages();
   }
 
-  Future<void> _loadFiles() async {
+  Future<void> _loadImages() async {
     try {
       final response = await _supabaseClient.storage
           .from('images')
           .list(path: '${_supabaseClient.auth.currentUser?.id}/');
 
+      final urls = await Future.wait(response.map((item) async {
+        final filePath = '${_supabaseClient.auth.currentUser?.id}/${item.name}';
+        final urlResponse = await _supabaseClient.storage
+            .from('images')
+            .createSignedUrl(filePath, 60);
+        return urlResponse;
+      }).toList());
+
       setState(() {
-        _files = response.map((item) => item.name).toList();
+        _imageUrls = urls;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading files: $e');
+      print('Error loading images: $e');
       setState(() {
         _isLoading = false;
       });
@@ -39,27 +49,33 @@ class _StoragePageState extends State<StoragePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Supabase Storage'),
+        title: const Text('Supabase Storage Gallery'),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _files.length,
+          ? const Center(child: CircularProgressIndicator())
+          : GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 4.0,
+                mainAxisSpacing: 4.0,
+              ),
+              itemCount: _imageUrls.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(_files[index]),
-                  onTap: () => _downloadFile(_files[index]),
+                return GestureDetector(
+                  onTap: () => _downloadFile(_imageUrls[index]),
+                  child: Image.network(_imageUrls[index], fit: BoxFit.cover),
                 );
               },
             ),
     );
   }
 
-  Future<void> _downloadFile(String fileName) async {
+  Future<void> _downloadFile(String fileUrl) async {
     try {
+      final uri = Uri.parse(fileUrl);
       final response = await _supabaseClient.storage
-          .from('your-bucket-name')
-          .download(fileName);
+          .from('images')
+          .download(uri.pathSegments.last);
 
       // Handle the file download response (e.g., save to local storage, display, etc.)
       // This is a simplified example, adjust according to your requirements

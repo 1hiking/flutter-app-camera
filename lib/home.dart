@@ -56,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     if (_lastWords.toLowerCase().contains('cheese')) {
       _takePicture();
+      // stop listening.
     }
   }
 
@@ -71,13 +72,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final String path = await supabase.storage.from('images').upload(
         '${supabase.auth.currentUser?.id}/${DateTime.now().millisecondsSinceEpoch}_${_lastWords.toLowerCase()}.jpg',
         File(file.path));
-    print('Picture taken: ${file.path}');
   }
 
   Future<void> _goGallery() async {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => StoragePage()),
+      MaterialPageRoute(builder: (context) => const StoragePage()),
     );
   }
 
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(
                   _speechToText.isNotListening ? Icons.mic_off : Icons.mic),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             FloatingActionButton(
