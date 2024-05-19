@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'voicecommandsscreen.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,10 +55,28 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _lastWords = result.recognizedWords;
     });
-    if (_lastWords.toLowerCase().contains('cheese')) {
-      _takePicture();
-      // stop listening.
-    }
+
+    // Mapa de comandos de voz a funciones de acción
+    Map<String, Function> voiceCommands = {
+      'llanta lateral izquierda': _takePictureLlantaLateralIzquierda,
+      'llanta lateral derecha': _takePictureLlantaLateralDerecha,
+      'llanta trasera izquierda': _takePictureLlantaTraseraIzquierda,
+      'llanta trasera derecha': _takePictureLlantaTraseraDerecha,
+      'motor': _takePictureMotor,
+      'puerta delantera derecha': _takePicturePuertaDelanteraDerecha,
+      'puerta delantera izquierda': _takePicturePuertaDelanteraIzquierda,
+      'puerta trasera derecha': _takePicturePuertaTraceraDerecha,
+      'puerta trasera izquierda': _takePicturePuertaTraceraIzquierda,
+    };
+
+    // Convertir las palabras reconocidas a minúsculas para una comparación más sencilla
+    String recognizedWords = _lastWords.toLowerCase();
+
+    voiceCommands.forEach((command, action) {
+      if (recognizedWords.contains(command)) {
+        action();
+      }
+    });
   }
 
   @override
@@ -74,6 +93,43 @@ class _HomeScreenState extends State<HomeScreen> {
         File(file.path));
   }
 
+  // Código donde se toman fotos de las partes del auto
+  Future<void> _takePictureLlantaLateralIzquierda() async {
+    _takePicture();
+  }
+
+  Future<void> _takePictureLlantaLateralDerecha() async {
+    _takePicture();
+  }
+
+  Future<void> _takePictureLlantaTraseraIzquierda() async {
+    _takePicture();
+  }
+
+  Future<void> _takePictureLlantaTraseraDerecha() async {
+    _takePicture();
+  }
+
+  Future<void> _takePictureMotor() async {
+    _takePicture();
+  }
+
+  Future<void> _takePicturePuertaDelanteraDerecha() async {
+    _takePicture();
+  }
+
+  Future<void> _takePicturePuertaDelanteraIzquierda() async {
+    _takePicture();
+  }
+
+  Future<void> _takePicturePuertaTraceraDerecha() async {
+    _takePicture();
+  }
+
+  Future<void> _takePicturePuertaTraceraIzquierda() async {
+    _takePicture();
+  }
+
   Future<void> _goGallery() async {
     Navigator.push(
       context,
@@ -81,18 +137,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _goToVoiceCommands() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const VoiceCommandsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Camera App',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: Scaffold(
-          appBar: AppBar(title: const Text('Camera Preview')),
-          body: _controller.value.isInitialized
-              ? CameraPreview(_controller)
-              : const Center(child: CircularProgressIndicator()),
-          floatingActionButton:
-              Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+      title: 'Camera App',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Camera Preview')),
+        body: _controller.value.isInitialized
+            ? CameraPreview(_controller)
+            : const Center(child: CircularProgressIndicator()),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             FloatingActionButton(
               onPressed: _speechToText.isNotListening
                   ? _startListening
@@ -102,16 +166,23 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(
                   _speechToText.isNotListening ? Icons.mic_off : Icons.mic),
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             FloatingActionButton(
               onPressed: _goGallery,
               tooltip: 'Go to gallery',
               heroTag: null,
               child: const Icon(Icons.collections),
-            )
-          ]),
-        ));
+            ),
+            const SizedBox(height: 10),
+            FloatingActionButton(
+              onPressed: _goToVoiceCommands,
+              tooltip: 'Voice Commands',
+              heroTag: null,
+              child: const Icon(Icons.list),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

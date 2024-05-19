@@ -73,9 +73,7 @@ class _StoragePageState extends State<StoragePage> {
   Future<void> _downloadFile(String fileUrl) async {
     try {
       final uri = Uri.parse(fileUrl);
-      final response = await _supabaseClient.storage
-          .from('images')
-          .download(uri.pathSegments.last);
+      final response = await _supabaseClient.storage.from('images').download(uri.pathSegments.last);
 
       // Handle the file download response (e.g., save to local storage, display, etc.)
       // This is a simplified example, adjust according to your requirements
